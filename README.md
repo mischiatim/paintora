@@ -21,7 +21,8 @@ https://paintora.herokuapp.com
 - The final dataset consists of ~70000 listings with full numerical and categorical information and at least one style-related textual tag.
 - Four painting types (acrylic, oil, watercolor and mixed-type) and prices in the range $100-$650 are included in the final dataset.  
 - Main tools: Pandas, Requests, Seaborn, some Scikit-Learn NLP features, and Python pickling.  
-See the '*_data_downloading_*.ipynb' notebook for details. 
+
+See the '_data_downloading_' notebook for details. 
 
 ## Machine Learning 
 - I tried a variety of linear and tree-based models to predict the price of a painting from individual feature types (numerical, categorical, textual tags of different types) or combinations of feature types. 
@@ -29,7 +30,8 @@ See the '*_data_downloading_*.ipynb' notebook for details.
   Most tag types were processed with Tf-Idf and dimensionality reduction before feeding to the model.
 - I trained a separate K Nearest-Neighbors model (working on dimensionality-reduced features) for finding comparable paintings to a given listing.
 - Main tools: Scikit-Learn, especially model selection and pipeline tools, custom transformers, NLP feature-extraction tools, Linear Models, Tree-based models and KNN.  
-See the '*_ml_models_*.ipynb' notebook for details.  
+
+See the '_ml_models_' notebook for details.  
 
 ## Interative visualization of the results 
 - I used Bokeh (https://bokeh.org) to create an app with multiple interactive widgets.
@@ -39,14 +41,15 @@ See the '*_ml_models_*.ipynb' notebook for details.
 - When custom features are specified by the user (thus creating a new 'test' listing, likely never seen before by the models), then the painting showed in the main window is the closest one among those in the training set.
   In that case the 'comparable listings' are the 2nd, 3rd and 4th closest paintings in the training set.
 - Main tools: Bokeh, especially widgets and image rendering from URL.   
-See the '*_ml_models_*.ipynb' notebook for details.   
 
-##App deployment
+See the '_local_demo_.ipynb' notebook for details.   
+
+## App deployment
 - I embedded the Bokeh app within a Flask app with a configuration that would work with Heroku.
   (https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/flask_gunicorn_embed.py).
 - I defined appropriate setting files (requirements.txt, Procfile and runtime.txt), created a Heroku app, and deployed to Heroku via Git.
-See the '*_flask_gunicorn_embed_*.py' script for details.
-There's also a '*_flask_embed_*.py' script used for local testing.   
+
+See the '_flask_gunicorn_embed_' script for details, and there's also a '_flask_embed_.py' script used for local testing.   
 (as in https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/flask_embed.py)
 
 

@@ -1,13 +1,6 @@
 import pandas as pd
 import numpy as np
 
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-#%matplotlib inline
-
-#import PIL
-#from PIL import Image
-
 import warnings
 warnings.filterwarnings('ignore')
 
