@@ -514,7 +514,7 @@ sockets, port = bind_sockets("localhost", 0)
 
 @app.route('/', methods=['GET'])
 def paintora_app_page():
-    script = server_document('http://localhost:5006/paintora_app' % port)
+    script = server_document('http://localhost:%d/paintora_app' % port)
     return render_template('about_paintora_with_Github.html', script=script, template="Flask")
     #return render_template('about_paintora_basic.html', script=script, template="Flask")
 
@@ -530,14 +530,6 @@ def bk_worker():
     server = BaseServer(IOLoop.current(), bokeh_tornado, bokeh_http)
     server.start()
     server.io_loop.start()
-    
-    
-    # Can't pass num_procs > 1 in this configuration. If you need to run multiple
-    # processes, see e.g. flask_gunicorn_embed.py
-    server = Server({'/paintora_app': paintora_app}, io_loop=IOLoop(), allow_websocket_origin=['127.0.0.1:8000']) #["localhost:8000"])
-    server.start()
-    server.io_loop.start()
-
     
 t = Thread(target=bk_worker)
 t.daemon = True
