@@ -525,7 +525,7 @@ def bk_worker():
     
     bokeh_tornado = BokehTornado(paintora_app, extra_websocket_origins=["paintora.herokuapp.com"]) 
     #bokeh_tornado = BokehTornado({'/paintora_app': paintora_app}, extra_websocket_origins=["localhost:8000"])
-    bokeh_http = HTTPServer(bokeh_tornado)
+    bokeh_http = HTTPServer(bokeh_tornado, xheaders=True)
     bokeh_http.add_sockets(sockets)
 
     server = BaseServer(IOLoop.current(), bokeh_tornado, bokeh_http)
