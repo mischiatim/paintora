@@ -515,10 +515,10 @@ sockets, port = bind_sockets("localhost", 0)
 
 @app.route('/', methods=['GET'])
 def paintora_app_page():
-    script = server_document('http://localhost:%d/paintora_app' % port)
+    script = server_document('https://paintora.herokuapp.com:%d/paintora_app' % port)
+    #script = server_document('http://localhost:%d/paintora_app' % port)
     return render_template('about_paintora_with_Github.html', script=script, template="Flask")
     #return render_template('about_paintora_basic.html', script=script, template="Flask")
-
 
 def bk_worker():
     asyncio.set_event_loop(asyncio.new_event_loop())
