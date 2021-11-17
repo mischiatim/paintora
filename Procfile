@@ -1,1 +1,1 @@
-web: gunicorn -w 4 paintora_app_flask_gunicorn_embed_v1:app
+web: bokeh serve --port=$PORT --allow-websocket-origin=paintora.herokuapp.com --address=0.0.0.0 --use-xheaders paintora_app_bokeh_standalone

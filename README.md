@@ -45,13 +45,9 @@ See the '_ml_models_' notebook for details.
 See the '_local_demo_.ipynb' notebook for details.   
 
 ## App deployment
-- I embedded the Bokeh app within a Flask app with a configuration that would work with Heroku.
-  (https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/flask_gunicorn_embed.py).
+- I made the Bokeh server app standalone following the example in Bekeh documentation:
+  https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/standalone_embed.py.
 - I defined appropriate setting files (requirements.txt, Procfile and runtime.txt), created a Heroku app, and deployed to Heroku via Git.
-
-See the '_flask_gunicorn_embed_' script for details, and there's also a '_flask_embed_.py' script used for local testing.   
-(as in https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/flask_embed.py)
-
 
 _____________________________________________________________
 Copyright &copy; 2021 Matteo Mischiati All Rights Reserved.
