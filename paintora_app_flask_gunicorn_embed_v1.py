@@ -17,8 +17,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 from bokeh.layouts import column, row
 from bokeh.plotting import figure #, show #curdoc
-from bokeh.io import output_notebook, output_file, reset_output 
-from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup, RadioButtonGroup 
+#from bokeh.io import output_notebook, output_file, reset_output 
+from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup #, RadioButtonGroup 
 from bokeh.themes import Theme
 from bokeh.embed import server_document
 
@@ -35,6 +35,7 @@ from bokeh.server.util import bind_sockets
 
 from threading import Thread
 from flask import Flask, render_template, request, redirect
+from tornado.httpserver import HTTPServer
 from tornado.ioloop import IOLoop
 
 
@@ -539,7 +540,7 @@ t.start()
 if __name__ == '__main__':
     print('This script is intended to be run with gunicorn. e.g.')
     print()
-    print('    gunicorn -w 4 flask_gunicorn_embed:app')
+    print('    gunicorn -w 4 paintora_app_flask_gunicorn_embed:app')
     print()
     print('will start the app on four processes')
     import sys
