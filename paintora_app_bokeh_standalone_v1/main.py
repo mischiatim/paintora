@@ -149,7 +149,8 @@ with open(knn_regressor_CVmodel_filename, 'rb') as f:
     knn_CVmodel = load(f)
     print('Loaded joblib file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
 
-
+#for debug:
+print(paintings_df_train)    
 
 num_listings_test = len(paintings_df_test)
 
@@ -492,6 +493,9 @@ neighbors = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), creat
                    create_neighbor_3_figure(nneighbor_indices_to_show[2]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
 
 painting_and_pred = column(create_listing_figure(index_to_show,from_test_set=True), div_prediction, width=500, height=700)
+
+starting_text = 'Starting Paintora APP'
+print(starting_text)
 
 layout = row(controls, painting_and_pred, neighbors) 
 
