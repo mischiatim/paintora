@@ -39,8 +39,8 @@ from bokeh.server.server import Server
 #
 # app = Flask(__name__)
 
-from . import custom_classes
-from .custom_classes import ModelTransformer, DictEncoder, TagsEncoder, stringlist_to_dict
+import custom_classes
+from custom_classes import ModelTransformer, DictEncoder, TagsEncoder, stringlist_to_dict
 
 
 # #to debug that the code can actually see the classes
