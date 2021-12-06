@@ -46,12 +46,6 @@ from bokeh.server.server import Server
 def paintora_app():
 
     min_price = 100.0
-
-    #Loading data and models:
-    #to debug that the code can actually see the classes
-    print(min_price)
-    print(stringlist_to_dict(['test']))
-    
     
     #Let's start by loading the training and testing dataset (as computed last after removing duplicates) and precomputed neighbors indices for all test paintings 
 
