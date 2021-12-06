@@ -4,7 +4,8 @@ import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
-from joblib import load
+#from joblib import load
+from dill import load
 
 import sklearn
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -12,7 +13,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from bokeh.layouts import column, row
 from bokeh.plotting import figure #, show #curdoc
 from bokeh.io import output_notebook, output_file, reset_output 
-from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup, RadioButtonGroup 
+from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup, OpenURL, TapTool 
 from bokeh.themes import Theme
 from bokeh.embed import server_document
 from bokeh.server.server import Server
@@ -25,48 +26,6 @@ from tornado.ioloop import IOLoop
 app = Flask(__name__)
 
 
-class ModelTransformer(BaseEstimator, TransformerMixin):
-    
-    def __init__(self, model):
-        self.predictor = model
-            
-    def fit(self, X, y):
-        # Fit the stored predictor.
-        self.predictor.fit(X, y)
-        return self
-    
-    def transform(self, X):
-        # Use predict on the stored predictor as a "transformation".
-        # reshape(-1,1) is required to return a 2-D array which is expected by scikit-learn.
-        return np.array(self.predictor.predict(X)).reshape(-1,1)
-    
-
-def stringlist_to_dict(stringlist):
-        dict = {}
-        for string in stringlist:
-            dict[string]=1
-        return dict
-    
-class DictEncoder(BaseEstimator, TransformerMixin):
-
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X):
-        # X will be a pandas series of strings representing lists of strings. Return a pandas series of dictionaries
-        return X.apply(eval).apply(stringlist_to_dict)
-    
-
-class TagsEncoder(BaseEstimator, TransformerMixin):
-    
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X):
-        # X will be a pandas series of strings representing lists of strings. Return a pandas series of single strings containing all individual strings joined by a space
-        return X.apply(eval).apply(lambda stringlist:' '.join(stringlist))
-
-
 def paintora_app(doc):
     
     min_price = 100.0
@@ -76,61 +35,59 @@ def paintora_app(doc):
     #Let's start by loading the training and testing dataset (as computed last after removing duplicates) and precomputed neighbors indices for all test paintings 
 
     #Note: for deployment I needed to split the training data in 2 parts as it was going over the Github limits
-    
-    paintings_df_train_w_imageinfo_v1_filename_part1 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part1.joblib'
+
+    paintings_df_train_w_imageinfo_v1_filename_part1 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part1.pickle'
 
     with open(paintings_df_train_w_imageinfo_v1_filename_part1, 'rb') as f:
         paintings_df_train_part1 = load(f)
-        print(f'Loaded joblib file with PART 1 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
-      
-    paintings_df_train_w_imageinfo_v1_filename_part2 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part2.joblib'
+        print(f'Loaded pickle file with PART 1 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
 
+    paintings_df_train_w_imageinfo_v1_filename_part2 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part2.pickle'
+    
     with open(paintings_df_train_w_imageinfo_v1_filename_part2, 'rb') as f:
         paintings_df_train_part2 = load(f)
-        print(f'Loaded joblib file with PART 2 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded pickle file with PART 2 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
     
     #To recombine the two parts of the training set:
     paintings_df_train = pd.concat([paintings_df_train_part1,paintings_df_train_part2])
        
 #     #old version attempting to load all training data at once (works locally but not on Github)
-    
-#     paintings_df_train_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1.joblib'
+
+#     paintings_df_train_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1.pickle'
 
 #     with open(paintings_df_train_w_imageinfo_v1_filename, 'rb') as f:
 #         paintings_df_train = load(f)
-#         print(f'Loaded joblib file with dataframe of train paintings >USD{int(min_price)} used in the App v1.')
+#         print(f'Loaded pickle file with dataframe of train paintings >USD{int(min_price)} used in the App v1.')
     
-    
-    paintings_df_test_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_test_v1.joblib'
+    paintings_df_test_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_test_v1.pickle'
 
     with open(paintings_df_test_w_imageinfo_v1_filename, 'rb') as f:
         paintings_df_test = load(f)
-        print(f'Loaded joblib file with dataframe of test paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded pickle file with dataframe of test paintings >USD{int(min_price)} used in the App v1.')
         
-    
-    nearest_neighbors_indices_paintings_test_v1_filename = f'./App_data/nearestneighbors_paintings_from_USD{int(min_price)}_v1.joblib'
+    nearest_neighbors_indices_paintings_test_v1_filename = f'./App_data/nearestneighbors_paintings_from_USD{int(min_price)}_v1.pickle'
     
     with open(nearest_neighbors_indices_paintings_test_v1_filename, 'rb') as f:
         neigh_ind_test = load(f)
-        print(f'Loaded joblib file with indices for 10 nearest neighbors for all test paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded pickle file with indices for 10 nearest neighbors for all test paintings >USD{int(min_price)} used in the App v1.')
     
 
     #For the price prediction, I will use the Blended linear model (random forest for numerical+categorical features, style tags, materials tags, other tags with linear blending). 
     #Let's load it (the required custom classes were defined above)
 
-    blended_model_rforest_linear_filename = './App_data/blended_model_rforest_linear.joblib'
+    blended_model_rforest_linear_filename = './App_data/blended_model_rforest_linear.pickle'
 
     with open(blended_model_rforest_linear_filename, 'rb') as f:
         blended_model_rforest_linear = load(f)
-        print('Loaded joblib file with linear blended model of random forests for numerical+categorical variables, style tags, materials tags, other tags.')
+        print('Loaded pickle file with linear blended model of random forests for numerical+categorical variables, style tags, materials tags, other tags.')
     
     
     #Also load the KNN regressor model for finding nearest neighbors:
-    knn_regressor_CVmodel_filename = './App_data/knn_CVmodel.joblib'
+    knn_regressor_CVmodel_filename = './App_data/knn_CVmodel.pickle'
 
     with open(knn_regressor_CVmodel_filename, 'rb') as f:
         knn_CVmodel = load(f)
-        print('Loaded joblib file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
+        print('Loaded pickle file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
     
     
     #Here starts the actual PaintORA code:
@@ -196,15 +153,23 @@ def paintora_app(doc):
         else:
             price_string = str(round(paintings_df_train.iloc[index_to_show]['price'],2))
         
-        main_fig_title = 'Closest painting based on features (price range $100-$650):                 $' + price_string  #+ new_painting_df.iloc[0]['url']
-    
-        p = figure(title = main_fig_title, width=500, height=600, x_range=(0,500),y_range=(0,600),min_border=0,toolbar_location = None, x_axis_type=None, y_axis_type=None)
+        main_fig_title = 'Closest painting based on features (price range $100-$650):                 $' + price_string  #+ '\n' + new_painting_df.iloc[0]['url']
+ 
+        p = figure(title = main_fig_title, width=500, height=600, x_range=(0,500),y_range=(0,600),min_border=0, x_axis_type=None, y_axis_type=None, toolbar_location = None) #,  tools="hover", tooltips = 'name') #[('name','$name')]) #, tools="tap" #,  tools="hover", tooltips = [('url','$url'),('x','$x')]) 
+
         
         if from_test_set:
             p.image_url(url=[paintings_df_test.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center') 
         else:
             p.image_url(url=[paintings_df_train.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center') 
-  
+
+        #p.text(x=[0], y = [0], text=[new_painting_df.iloc[0]['url']], angle = 0)
+        #p.quad(0,0,100,100) 
+            
+#         url = "http://docs.bokeh.org"
+#         taptool = p.select(type=TapTool)
+#         taptool.callback = OpenURL(url=url)
+
         return p
 
 
@@ -263,7 +228,6 @@ def paintora_app(doc):
             layout.children[2] = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), create_neighbor_2_figure(nneighbor_indices_to_show[1]), \
                                         create_neighbor_3_figure(nneighbor_indices_to_show[2]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
                  
- 
     def update_max_dim(attr, old, new):
         min_dimension = new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
         if new>=min_dimension:
@@ -296,8 +260,7 @@ def paintora_app(doc):
         new_painting_df.loc[new_painting_df.index[0],'when_made']=new
         predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
         update_predictions_and_images(new_painting_df)
-        
-        
+            
     def update_madebyseller(attr, old, new):
         if new==[0]:
             new_painting_df.loc[new_painting_df.index[0],'made_by_seller']=True
@@ -474,7 +437,7 @@ def paintora_app(doc):
     
     #controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, toggle_madebyseller, style_tags_multi_choice, width=200, height=600, margin=(50,0,0,0))
     #controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice, width=200, height=600, margin=(50,0,0,0))
-    controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(50,0,0,0))
+    controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(10,0,0,0)) #, margin=(50,0,0,0))
         
 
     neighbors = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), create_neighbor_2_figure(nneighbor_indices_to_show[1]), \
