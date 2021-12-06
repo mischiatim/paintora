@@ -9,7 +9,7 @@ import numpy as np
 import warnings
 warnings.filterwarnings('ignore')
 
-from joblib import load
+from dill import load
 
 import sklearn
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -42,48 +42,6 @@ from tornado.ioloop import IOLoop
 app = Flask(__name__)
 
 
-class ModelTransformer(BaseEstimator, TransformerMixin):
-    
-    def __init__(self, model):
-        self.predictor = model
-            
-    def fit(self, X, y):
-        # Fit the stored predictor.
-        self.predictor.fit(X, y)
-        return self
-    
-    def transform(self, X):
-        # Use predict on the stored predictor as a "transformation".
-        # reshape(-1,1) is required to return a 2-D array which is expected by scikit-learn.
-        return np.array(self.predictor.predict(X)).reshape(-1,1)
-    
-
-def stringlist_to_dict(stringlist):
-        dict = {}
-        for string in stringlist:
-            dict[string]=1
-        return dict
-    
-class DictEncoder(BaseEstimator, TransformerMixin):
-
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X):
-        # X will be a pandas series of strings representing lists of strings. Return a pandas series of dictionaries
-        return X.apply(eval).apply(stringlist_to_dict)
-    
-
-class TagsEncoder(BaseEstimator, TransformerMixin):
-    
-    def fit(self, X, y=None):
-        return self
-    
-    def transform(self, X):
-        # X will be a pandas series of strings representing lists of strings. Return a pandas series of single strings containing all individual strings joined by a space
-        return X.apply(eval).apply(lambda stringlist:' '.join(stringlist))
-
-
 def paintora_app(doc):
     
     min_price = 100.0
@@ -94,13 +52,13 @@ def paintora_app(doc):
 
     #Note: for deployment I needed to split the training data in 2 parts as it was going over the Github limits
     
-    paintings_df_train_w_imageinfo_v1_filename_part1 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part1.joblib'
+    paintings_df_train_w_imageinfo_v1_filename_part1 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part1.pickle'
 
     with open(paintings_df_train_w_imageinfo_v1_filename_part1, 'rb') as f:
         paintings_df_train_part1 = load(f)
         print(f'Loaded joblib file with PART 1 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
       
-    paintings_df_train_w_imageinfo_v1_filename_part2 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part2.joblib'
+    paintings_df_train_w_imageinfo_v1_filename_part2 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part2.pickle'
 
     with open(paintings_df_train_w_imageinfo_v1_filename_part2, 'rb') as f:
         paintings_df_train_part2 = load(f)
@@ -111,21 +69,21 @@ def paintora_app(doc):
        
 #     #old version attempting to load all training data at once (works locally but not on Github)
     
-#     paintings_df_train_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1.joblib'
+#     paintings_df_train_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1.pickle'
 
 #     with open(paintings_df_train_w_imageinfo_v1_filename, 'rb') as f:
 #         paintings_df_train = load(f)
 #         print(f'Loaded joblib file with dataframe of train paintings >USD{int(min_price)} used in the App v1.')
     
     
-    paintings_df_test_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_test_v1.joblib'
+    paintings_df_test_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_test_v1.pickle'
 
     with open(paintings_df_test_w_imageinfo_v1_filename, 'rb') as f:
         paintings_df_test = load(f)
         print(f'Loaded joblib file with dataframe of test paintings >USD{int(min_price)} used in the App v1.')
         
     
-    nearest_neighbors_indices_paintings_test_v1_filename = f'./App_data/nearestneighbors_paintings_from_USD{int(min_price)}_v1.joblib'
+    nearest_neighbors_indices_paintings_test_v1_filename = f'./App_data/nearestneighbors_paintings_from_USD{int(min_price)}_v1.pickle'
     
     with open(nearest_neighbors_indices_paintings_test_v1_filename, 'rb') as f:
         neigh_ind_test = load(f)
@@ -135,7 +93,7 @@ def paintora_app(doc):
     #For the price prediction, I will use the Blended linear model (random forest for numerical+categorical features, style tags, materials tags, other tags with linear blending). 
     #Let's load it (the required custom classes were defined above)
 
-    blended_model_rforest_linear_filename = './App_data/blended_model_rforest_linear.joblib'
+    blended_model_rforest_linear_filename = './App_data/blended_model_rforest_linear.pickle'
 
     with open(blended_model_rforest_linear_filename, 'rb') as f:
         blended_model_rforest_linear = load(f)
@@ -143,7 +101,7 @@ def paintora_app(doc):
     
     
     #Also load the KNN regressor model for finding nearest neighbors:
-    knn_regressor_CVmodel_filename = './App_data/knn_CVmodel.joblib'
+    knn_regressor_CVmodel_filename = './App_data/knn_CVmodel.pickle'
 
     with open(knn_regressor_CVmodel_filename, 'rb') as f:
         knn_CVmodel = load(f)
