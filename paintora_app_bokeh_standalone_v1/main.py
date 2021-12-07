@@ -6,9 +6,6 @@ warnings.filterwarnings('ignore')
 
 from dill import load
 
-# import sklearn
-# from sklearn.base import BaseEstimator, TransformerMixin
-
 from bokeh.layouts import column, row
 from bokeh.plotting import figure, curdoc #, show 
 #from bokeh.io import output_notebook, output_file, reset_output 
