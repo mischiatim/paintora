@@ -6,8 +6,8 @@ warnings.filterwarnings('ignore')
 
 from dill import load
 
-import sklearn
-from sklearn.base import BaseEstimator, TransformerMixin
+# import sklearn
+# from sklearn.base import BaseEstimator, TransformerMixin
 
 from bokeh.layouts import column, row
 from bokeh.plotting import figure, curdoc #, show 
