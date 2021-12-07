@@ -6,8 +6,8 @@ warnings.filterwarnings('ignore')
 
 from dill import load
 
-#import sklearn
-#from sklearn.base import BaseEstimator, TransformerMixin
+import sklearn
+from sklearn.base import BaseEstimator, TransformerMixin
 
 from bokeh.layouts import column, row
 from bokeh.plotting import figure, curdoc #, show 
@@ -55,13 +55,13 @@ def paintora_app():
 
     with open(paintings_df_train_w_imageinfo_v1_filename_part1, 'rb') as f:
         paintings_df_train_part1 = load(f)
-        print(f'Loaded joblib file with PART 1 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded file with PART 1 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
 
     paintings_df_train_w_imageinfo_v1_filename_part2 = f'./App_data/paintings_from_USD{int(min_price)}_df_train_v1_part2.pickle'
 
     with open(paintings_df_train_w_imageinfo_v1_filename_part2, 'rb') as f:
         paintings_df_train_part2 = load(f)
-        print(f'Loaded joblib file with PART 2 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded file with PART 2 of dataframe of train paintings >USD{int(min_price)} used in the App v1.')
 
     #To recombine the two parts of the training set:
     paintings_df_train = pd.concat([paintings_df_train_part1,paintings_df_train_part2])
@@ -72,21 +72,21 @@ def paintora_app():
 
     #     with open(paintings_df_train_w_imageinfo_v1_filename, 'rb') as f:
     #         paintings_df_train = load(f)
-    #         print(f'Loaded joblib file with dataframe of train paintings >USD{int(min_price)} used in the App v1.')
+    #         print(f'Loaded file with dataframe of train paintings >USD{int(min_price)} used in the App v1.')
 
 
     paintings_df_test_w_imageinfo_v1_filename = f'./App_data/paintings_from_USD{int(min_price)}_df_test_v1.pickle'
 
     with open(paintings_df_test_w_imageinfo_v1_filename, 'rb') as f:
         paintings_df_test = load(f)
-        print(f'Loaded joblib file with dataframe of test paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded file with dataframe of test paintings >USD{int(min_price)} used in the App v1.')
 
 
     nearest_neighbors_indices_paintings_test_v1_filename = f'./App_data/nearestneighbors_paintings_from_USD{int(min_price)}_v1.pickle'
 
     with open(nearest_neighbors_indices_paintings_test_v1_filename, 'rb') as f:
         neigh_ind_test = load(f)
-        print(f'Loaded joblib file with indices for 10 nearest neighbors for all test paintings >USD{int(min_price)} used in the App v1.')
+        print(f'Loaded file with indices for 10 nearest neighbors for all test paintings >USD{int(min_price)} used in the App v1.')
 
 
     #For the price prediction, I will use the Blended linear model (random forest for numerical+categorical features, style tags, materials tags, other tags with linear blending). 
@@ -96,7 +96,7 @@ def paintora_app():
 
     with open(blended_model_rforest_linear_filename, 'rb') as f:
         blended_model_rforest_linear = load(f)
-        print('Loaded joblib file with linear blended model of random forests for numerical+categorical variables, style tags, materials tags, other tags.')
+        print('Loaded file with linear blended model of random forests for numerical+categorical variables, style tags, materials tags, other tags.')
 
 
     #Also load the KNN regressor model for finding nearest neighbors:
@@ -104,7 +104,7 @@ def paintora_app():
 
     with open(knn_regressor_CVmodel_filename, 'rb') as f:
         knn_CVmodel = load(f)
-        print('Loaded joblib file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
+        print('Loaded file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
 
     #for debug:
     print(paintings_df_train)    
