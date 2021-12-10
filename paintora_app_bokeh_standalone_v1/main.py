@@ -7,9 +7,8 @@ warnings.filterwarnings('ignore')
 from dill import load
 
 from bokeh.layouts import column, row
-from bokeh.plotting import figure, curdoc #, show 
-#from bokeh.io import output_notebook, output_file, reset_output 
-from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup 
+from bokeh.plotting import figure, curdoc
+from bokeh.models import Select, MultiChoice, Toggle, Div, Slider, CheckboxGroup, OpenURL, TapTool 
 from bokeh.themes import Theme
 from bokeh.embed import server_document
 
@@ -103,233 +102,35 @@ def paintora_app():
         knn_CVmodel = load(f)
         print('Loaded file with KNNregression model using numerical+categorical variables, style tags, materials tags, other tags.')
 
-    #for debug:
-    print(paintings_df_train)    
-
-    num_listings_test = len(paintings_df_test)
-
-    #initialize Numpy's random generator
-    np.random.seed(seed=100)
-
-    #I initialize with the seventh random painting which is a nice mountain picture
-    for i in range(0,6):
-        _ = np.random.randint(num_listings_test)
-    index_to_show = np.random.randint(num_listings_test)
-
-    new_painting_df = paintings_df_test.iloc[[index_to_show]]
-    predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-
-    #I already precomputed the nearest neighbors for each painting in the test set, so here I just need to recall the right row
-    nneighbor_indices_to_show = neigh_ind_test[index_to_show,:]
-
-    #Only if I decide to recompute the neighbors (after changing some parameters, and so on) I will have to make a new calculation 
-
-    def create_neighbor_1_figure(nneighbor_index_to_show):
-
-        title_1 = 'Comparable #1: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
-
-        p1 = figure(title = title_1,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, x_axis_type=None, y_axis_type=None)
-
-        p1.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
-
-        return p1
-
-    def create_neighbor_2_figure(nneighbor_index_to_show):
-
-
-        title_2 = 'Comparable #2: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
-
-        p2 = figure(title = title_2,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, x_axis_type=None, y_axis_type=None)
-
-        p2.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
-
-        return p2
-
-
-    def create_neighbor_3_figure(nneighbor_index_to_show):
-
-        title_3 = 'Comparable #3: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
-
-        p3 = figure(title = title_3,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, x_axis_type=None, y_axis_type=None)
-
-        p3.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
-
-        return p3
-
-
-    def create_listing_figure(index_to_show,from_test_set=True):
-
-        if from_test_set:
-            price_string = str(round(paintings_df_test.iloc[index_to_show]['price'],2))
-        else:
-            price_string = str(round(paintings_df_train.iloc[index_to_show]['price'],2))
-
-        main_fig_title = 'Closest painting based on features (price range $100-$650):                 $' + price_string  #+ new_painting_df.iloc[0]['url']
-
-        p = figure(title = main_fig_title, width=500, height=600, x_range=(0,500),y_range=(0,600),min_border=0,toolbar_location = None, x_axis_type=None, y_axis_type=None)
-
-        if from_test_set:
-            p.image_url(url=[paintings_df_test.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center') 
-        else:
-            p.image_url(url=[paintings_df_train.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center') 
-
-        return p
-
-
-    def update_predictions_and_images(new_painting_df):
-
-        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-
-        div_prediction.text=("<b>Predicted price on Etsy.com for a painting with the features specified on the left: $</b>"+ str(round(predicted_price,2)))
-
-        features_paintings_df_new = knn_CVmodel.best_estimator_['all scaled features'].transform(new_painting_df) 
-
-        nneighbor_indices_to_show = knn_CVmodel.best_estimator_['knn'].kneighbors(features_paintings_df_new,4,return_distance=False)[0]
-
-        layout.children[1] = column(create_listing_figure(nneighbor_indices_to_show[0],from_test_set=False), div_prediction, width=500, height=700)
-
-        layout.children[2] = column(create_neighbor_1_figure(nneighbor_indices_to_show[1]), create_neighbor_2_figure(nneighbor_indices_to_show[2]), \
-                                        create_neighbor_3_figure(nneighbor_indices_to_show[3]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
-
-
-    def restart_with_new_index(status):
-        if status==True:
-
-            index_to_show = np.random.randint(num_listings_test)
-
-            new_painting_df = paintings_df_test.iloc[[index_to_show]]
-            predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-            div_prediction.text=("<b>Predicted price on Etsy.com for a painting with the features specified on the left: $</b>"+ str(round(predicted_price,2)))
-
-            #I already precomputed the nearest neighbors for each painting in the test set, so here I just need to recall the right row
-            nneighbor_indices_to_show = neigh_ind_test[index_to_show,:]
-
-            features_paintings_df_new = knn_CVmodel.best_estimator_['all scaled features'].transform(new_painting_df) 
-
-            nneighbor_indices_to_show = knn_CVmodel.best_estimator_['knn'].kneighbors(features_paintings_df_new,3,return_distance=False)[0]
-
-            when_made_select.value =new_painting_df.iloc[0]['when_made']
-            types_select.value=new_painting_df.iloc[0]['painting_type']
-
-            style_tags_multi_choice.value=eval(new_painting_df.iloc[0]['style_tags_new'])
-
-            materials_tags_multi_choice.value=eval(new_painting_df.iloc[0]['materials_tags_new'])
-
-            other_tags_multi_choice.value=eval(new_painting_df.iloc[0]['tags_new'])
-
-            max_dim_slider.value=new_painting_df.iloc[0]['max_dimension']
-
-            min_dim_slider.value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
-
-            if new_painting_df.iloc[0]['made_by_seller']:
-                checkbox_group_madebyseller.active=[0]
-            else:
-                checkbox_group_madebyseller.active=[]           
-
-            layout.children[1] = column(create_listing_figure(index_to_show,from_test_set=True), div_prediction, width=500, height=700)
-
-            layout.children[2] = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), create_neighbor_2_figure(nneighbor_indices_to_show[1]), \
-                                        create_neighbor_3_figure(nneighbor_indices_to_show[2]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
-
-
-    def update_max_dim(attr, old, new):
-        min_dimension = new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
-        if new>=min_dimension:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/min_dimension
-        else:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=min_dimension/new
-        update_predictions_and_images(new_painting_df)
-
-    def update_min_dim(attr, old, new):
-        max_dimension = new_painting_df.iloc[0]['max_dimension']
-        if new<=max_dimension:
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=max_dimension/new
-        else:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/max_dimension
-        update_predictions_and_images(new_painting_df)
-
-    def update_type(attr, old, new):
-        avail_types = ['acrylic', 'oil', 'watercolor', 'more_than_one']
-        new_painting_df.loc[new_painting_df.index[0],'painting_type']=new
-        update_predictions_and_images(new_painting_df)
-
-    def update_when_made(attr, old, new):
-        new_painting_df.loc[new_painting_df.index[0],'when_made']=new
-        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-        update_predictions_and_images(new_painting_df)
-
-
-    def update_madebyseller(attr, old, new):
-        if new==[0]:
-            new_painting_df.loc[new_painting_df.index[0],'made_by_seller']=True
-            predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-            update_predictions_and_images(new_painting_df)
-        elif new==[]:
-            new_painting_df.loc[new_painting_df.index[0],'made_by_seller']=False
-            predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-            update_predictions_and_images(new_painting_df)
-
-    def update_style_tags_list(attr, old, new):
-        new_painting_df.loc[new_painting_df.index[0],'style_tags_new']=repr(new)
-        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-        update_predictions_and_images(new_painting_df)
-
-    def update_materials_tags_list(attr, old, new):
-        new_painting_df.loc[new_painting_df.index[0],'materials_tags_new']=repr(new)
-        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-        update_predictions_and_images(new_painting_df)
-
-    def update_other_tags_list(attr, old, new):
-        new_painting_df.loc[new_painting_df.index[0],'tags_new']=repr(new)
-        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
-        update_predictions_and_images(new_painting_df)
-
-
-    #Initialize the control widgets
-
-    avail_when_made = ['made_2020s', 'made_2010s', 'made_before_2010', 'made_to_order']
-
-    when_made_select = Select(title='When was it made:', value=new_painting_df.iloc[0]['when_made'], options=avail_when_made, margin=(10,20,10,0)) 
-    when_made_select.on_change('value',update_when_made)
-
-
-    avail_types = ['acrylic', 'oil', 'watercolor', 'more_than_one']
-    types_select = Select(title='Type:', value=new_painting_df.iloc[0]['painting_type'], options=avail_types, margin=(10,20,10,0)) 
-    types_select.on_change('value',update_type)
-
-
-    all_style_tags = ['abstract','african','american','asian','athletic','automobilia','avant','beach','boho','burlesque','century','chic','coastal',\
-                      'contemporary','cottage','country','deco','edwardian','expressionism','fantasy','fashion','floral','folk','goth',\
-                      'hippie','hipster','historical','hollywood','impressionism','industrial','kawaii','kitsch','landscape','mcm','mediterranean',\
-                      'military','minimalism','mod','modern','modernism','nautical','neoclassical','nouveau','photorealism','pop','portrait','primitive',\
-                      'realism','regency','renaissance','resort','retro','rocker','rustic','sci','southwestern','spooky','steampunk','traditional',\
-                      'tribal','victorian','vintage','western','whimsical','woodland','zen'] #,'cовременный','неоклассический','традиционный']
-                      #note: I removed three Russian styles and styles that occurred in less than 50 paintings 
-
-    style_tags_multi_choice = MultiChoice(title='Style: ', options=all_style_tags, value=eval(new_painting_df.iloc[0]['style_tags_new']), margin=(10,20,30,0), height=120) #margin=(10,20,30,0), height=150
-    style_tags_multi_choice.on_change("value", update_style_tags_list) 
-
-
-    all_materials_tags = ['aluminum','canvas','cardboard','fabric','framed','hardboard','metal','glass','paper','wood','unframed',\
-                         'collage','charcoal','gel','gesso','glitter','gloss','gouache','graphite','ink','matte','pastel','pen','pencil','print','spray',\
+    
+    #these are the style tags that will be admissible in the app: (I am only keeping the top 30 styles, that occurred in at least 100 training set paintings)
+    all_style_tags = ['abstract','african','american','asian','beach','century','coastal',\
+                      'contemporary','country','deco','expressionism','fantasy','fashion','floral','folk',\
+                      'impressionism','landscape','minimalism','modern','nautical','pop','portrait',\
+                      'realism','rustic','spooky','traditional','vintage','western','whimsical','woodland'] 
+
+                     #This was the full list excluding those occurring in less than 50 paintings:
+                     #['abstract','african','american','asian','athletic','automobilia','avant','beach','boho','burlesque','century','chic','coastal',\
+                     # 'contemporary','cottage','country','deco','edwardian','expressionism','fantasy','fashion','floral','folk','goth',\
+                     # 'hippie','hipster','historical','hollywood','impressionism','industrial','kawaii','kitsch','landscape','mcm','mediterranean',\
+                     # 'military','minimalism','mod','modern','modernism','nautical','neoclassical','nouveau','photorealism','pop','portrait','primitive',\
+                     # 'realism','regency','renaissance','resort','retro','rocker','rustic','sci','southwestern','spooky','steampunk','traditional',\
+                     # 'tribal','victorian','vintage','western','whimsical','woodland','zen','cовременный','неоклассический','традиционный'] 
+    
+    #these are the material tags that will be admissible in the app:
+    all_materials_tags = ['aluminum','canvas','cardboard','fabric','board','hardboard','metal','glass','paper','wood','framed','unframed',\
+                         'collage','charcoal','gel','gesso','glitter','gloss','gouache','graphite','ink','matte','pastel','pen','pencil','print','resin','spray',\
                          'black','blue','gold','green','metallic','purple','red','white','yellow']
-
-                         #words that were part of the vocabulary but did not include in the selection:
-                         #'140','acid','acrylic','acrylics','arches','archival','birch','board','brush','brushes',\
+                         
+                         #words that were part of the vocabulary but I did not include in the selection to keep it manageable:
+                         #'140','acid','acrylic','acrylics','arches','archival','birch','brush','brushes',\
                          #'clear','cold','cotton','epoxy','fine','finish','floetrol','frame',\
                          #'grade','hand','hang','hanger','hanging','hardware','heavy','knife',\
                          #'lb','leaf','linen','liquitex','love','marker','mat','media','mixed','newton','oil','oils','painted','palette',\
-                         #'panel','paste','pigment','pigments','premium','press','pressed','protective','resin','satin',\
+                         #'panel','paste','pigment','pigments','premium','press','pressed','protective','satin',\
                          #,'stretched','stretcher','texture','thick','uv','varnish','water','watercolor','watercolors','winsor',\
                          # 'wire','wooden','wrap','wrapped']
-
+                            
                          #This was the full list:
                          #['140','acid','acrylic','acrylics','aluminum','arches','archival','birch','black','blue','board','brush','brushes','canvas','cardboard',\
                          #'charcoal','clear','cold','collage','cotton','epoxy','fabric','fine','finish','floetrol','frame','framed','gel','gesso','glass','glitter',\
@@ -338,11 +139,18 @@ def paintora_app():
                          #'panel','paper','paste','pastel','pen','pencil','pigment','pigments','premium','press','pressed','print','protective','purple','red','resin',\
                          #'satin','spray','stretched','stretcher','texture','thick','unframed','uv','varnish','water','watercolor','watercolors','white','winsor',\
                          # 'wire','wood','wooden','wrap','wrapped','yellow']
-
-    materials_tags_multi_choice = MultiChoice(title='Materials and Colors: ', options=all_materials_tags, value=eval(new_painting_df.iloc[0]['materials_tags_new']), margin=(10,20,30,0), height=100) #150 
-    materials_tags_multi_choice.on_change("value", update_materials_tags_list) 
-
-
+    
+    #these are the other tags that will be admissible in the app:
+    all_other_tags = ['nature','flowers','ocean','seascape','trees','mountains','sky','lake','river','farm','city','garden','clouds','desert',\
+                      'woman','man','family','children','dog','cat','pet','animal','wildlife','still','life',\
+                       'spring','summer','fall','winter','christmas','tropical',\
+                       'geometric','scene','decoration','photo','figurative','portraits','plein','air',\
+                      'pour','fluid','antique','textured','collectibles',\
+                       'house','office','nursery','kitchen','bedroom',\
+                      'bright','dark','square','rectangle',\
+                     'sunrise','sunset','music','day','night','face','idea']
+        
+        
     #     #Here is the whole list of the most common other tags and bigrams, with the frequency they were found in the training set. From these I choice a few common/representative themes.
     #     {'nature': 3514,'flowers': 3285,'ocean': 3256,'flower': 2572,'pink': 2570,'trees': 2299,'life': 2230,'signed': 2150,'woman': 2073,'house': 1998,'pour': 1787,'tree': 1720,\
     #      'still': 1719,'orange': 1699,'seascape': 1674,'fluid': 1663,'sunset': 1634,'pet': 1588,'living': 1565,'kind': 1531,'animal': 1524,'office': 1517,'bright': 1425,'sky': 1399,\
@@ -404,26 +212,299 @@ def paintora_app():
     #      'russian': 103,'skyline': 103,'9x12': 102,'calligraphy': 102,'land': 102,'lowbrow': 102,'nature mountain': 102,'sacred': 102,'wash': 102,'classical': 101,'coffee': 101,\
     #      'evening': 101,'flying': 101,'grand': 101,'tree forest': 101,'your': 101,'30': 100,'apple': 100,'bloom': 100,'dawn': 100,'elephant': 100,'flag': 100,'shower': 100,\
     #      'sunny': 100,'tattoo': 100}
+    
+    
+
+    #functions for the interactive plotting of the main listing image and the images for the 3 comparables
+
+    #note: if the user requests a custom prediction, the main listing image is from the training set, so I need to allow for that
+    def create_listing_figure(index_to_show,from_test_set=True):
+        
+        if from_test_set:
+            price_string = str(round(paintings_df_test.iloc[index_to_show]['price'],1))
+        else:
+            price_string = str(round(paintings_df_train.iloc[index_to_show]['price'],1))
+        
+        main_fig_title = 'Closest painting based on features (price range $100-$650):                 $' + price_string  #+ new_painting_df.iloc[0]['url']
+    
+        p = figure(title = main_fig_title, width=500, height=600, x_range=(0,500),y_range=(0,600),min_border=0,toolbar_location = None, \
+                   x_axis_type=None, y_axis_type=None, tools='tap')
+        
+        if from_test_set:
+            p.image_url(url=[paintings_df_test.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center') 
+            url = paintings_df_test.iloc[index_to_show]['url'] 
+        else:
+            p.image_url(url=[paintings_df_train.iloc[index_to_show]['image_url_fullxfull']], x=250, y=300, w=500, h=600, anchor='center')
+            url = paintings_df_train.iloc[index_to_show]['url']
+  
+        p.rect(x=250, y=300, width=498, height=598, line_color = 'black', fill_alpha=0)   
+        taptool = p.select(type=TapTool)
+        taptool.callback = OpenURL(url=url)
+
+        return p
+    
+    
+    #The comparables instead always come from the training set:
+    
+    def create_neighbor_1_figure(nneighbor_index_to_show):
+    
+        title_1 = 'Comparable #1: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
+    
+        p1 = figure(title = title_1,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, \
+                    x_axis_type=None, y_axis_type=None, tools='tap')
+        
+        p1.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
+
+        p1.rect(x=75, y=100, width=148, height=198, line_color = 'black', fill_alpha=0)   
+        url = paintings_df_train.iloc[nneighbor_index_to_show]['url'] 
+        taptool = p1.select(type=TapTool)
+        taptool.callback = OpenURL(url=url)
+    
+        return p1
+    
+    def create_neighbor_2_figure(nneighbor_index_to_show):
+
+        title_2 = 'Comparable #2: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
+    
+        p2 = figure(title = title_2,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, \
+                    x_axis_type=None, y_axis_type=None, tools='tap')
+        
+        p2.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
+        
+        p2.rect(x=75, y=100, width=148, height=198, line_color = 'black', fill_alpha=0)   
+        url = paintings_df_train.iloc[nneighbor_index_to_show]['url'] 
+        taptool = p2.select(type=TapTool)
+        taptool.callback = OpenURL(url=url)
+        
+        return p2
+    
+    
+    def create_neighbor_3_figure(nneighbor_index_to_show):
+    
+        title_3 = 'Comparable #3: $' + str(round(paintings_df_train.iloc[nneighbor_index_to_show]['price'],2))
+    
+        p3 = figure(title = title_3,width=150, height=200, x_range=(0,150),y_range=(0,200),min_border=0,toolbar_location = None, \
+                    x_axis_type=None, y_axis_type=None, tools='tap')
+        
+        p3.image_url(url=[paintings_df_train.iloc[nneighbor_index_to_show]['image_url_fullxfull']], x=75, y=100, w=150, h=200, anchor='center') 
+        
+        p3.rect(x=75, y=100, width=148, height=198, line_color = 'black', fill_alpha=0)   
+        url = paintings_df_train.iloc[nneighbor_index_to_show]['url'] 
+        taptool = p3.select(type=TapTool)
+        taptool.callback = OpenURL(url=url)
+        
+        return p3
+    
+    #This is the function to call if the user requests a custom prediction by changing some parameters in the widget: 
+    
+    def update_predictions_and_images(new_painting_df):
+        
+        predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
+        
+        div_prediction.text=('<b>Predicted price on Etsy.com for a painting with the given features:&nbsp; &nbsp; &nbsp; $'+ \
+                               str(round(predicted_price,1)) + '</b><br><br><b>Instructions:</b><br>\
+                               1) Edit features for custom prediction or click button to restart with a new painting<br>\
+                               2) Click on any image to go to the corresponding listing on Etsy.com (as of Nov 2021)') 
+        
+        features_paintings_df_new = knn_CVmodel.best_estimator_['all scaled features'].transform(new_painting_df) 
+    
+        nneighbor_indices_to_show = knn_CVmodel.best_estimator_['knn'].kneighbors(features_paintings_df_new,4,return_distance=False)[0]
+         
+        layout.children[1] = column(create_listing_figure(nneighbor_indices_to_show[0],from_test_set=False), div_prediction, width=500, height=700)
+        
+        layout.children[2] = column(create_neighbor_1_figure(nneighbor_indices_to_show[1]), create_neighbor_2_figure(nneighbor_indices_to_show[2]), \
+                                        create_neighbor_3_figure(nneighbor_indices_to_show[3]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
+
+  
+    #These are the interactive callbacks from each of the widgets
+ 
+    def update_max_dim(attr, old, new):
+        min_dimension = new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
+        if new>=min_dimension:
+            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/min_dimension
+        else:
+            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=min_dimension
+            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=min_dimension/new
+        update_predictions_and_images(new_painting_df)
+
+    def update_min_dim(attr, old, new):
+        max_dimension = new_painting_df.iloc[0]['max_dimension']
+        if new<=max_dimension:
+            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=max_dimension/new
+        else:
+            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/max_dimension
+        update_predictions_and_images(new_painting_df)
+        
+    def update_type(attr, old, new):
+        new_painting_df.loc[new_painting_df.index[0],'painting_type']=new
+        update_predictions_and_images(new_painting_df)
+        
+    def update_when_made(attr, old, new):
+        new_painting_df.loc[new_painting_df.index[0],'when_made']=new
+        update_predictions_and_images(new_painting_df)
+             
+    def update_madebyseller(attr, old, new):
+        if new==[0]:
+            new_painting_df.loc[new_painting_df.index[0],'made_by_seller']=True
+            update_predictions_and_images(new_painting_df)
+        elif new==[]:
+            new_painting_df.loc[new_painting_df.index[0],'made_by_seller']=False
+            update_predictions_and_images(new_painting_df)
+    
+    def update_style_tags_list(attr, old, new):
+        new_painting_df.loc[new_painting_df.index[0],'style_tags_new']=repr(new)
+        update_predictions_and_images(new_painting_df)
+        
+    def update_materials_tags_list(attr, old, new):
+        new_painting_df.loc[new_painting_df.index[0],'materials_tags_new']=repr(new)
+        update_predictions_and_images(new_painting_df)
+      
+    def update_other_tags_list(attr, old, new):
+        new_painting_df.loc[new_painting_df.index[0],'tags_new']=repr(new)
+        update_predictions_and_images(new_painting_df)
+ 
+        #This is the function if the user wants to start from a different sample painting from the test set:
+    
+    def restart_with_new_index(status):
+        if status==True:
+  
+            index_to_show = np.random.randint(num_listings_test)
+    
+            new_painting_df = paintings_df_test.iloc[[index_to_show]]
+        
+            #predicted price with ALL the features of the test painting, not only those shown/modifiable in the app
+            predicted_price_orig = blended_model_rforest_linear.predict(new_painting_df)[0]
+
+            #I already precomputed the nearest neighbors for each painting in the test set (using ALL the features), so here I just need to recall the right row
+            nneighbor_indices_to_show_orig = neigh_ind_test[index_to_show,:]
+            
+                        
+            #now set the features on the left widgets, in case the user wants to compute a custom prediction afterwards
+            #(note that this automatically )
+            
+            #remove the tags that are not admissible in the app:
+            new_painting_df['style_tags_new'] = new_painting_df['style_tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_style_tags]).apply(repr)
+            new_painting_df['materials_tags_new'] = new_painting_df['materials_tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_materials_tags]).apply(repr)
+            new_painting_df['tags_new'] = new_painting_df['tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_other_tags]).apply(repr)
+               
+            #set the fields that are not part of the app to default values to prevent from biasing custom predictions made afterwards
+            new_painting_df.loc[new_painting_df.index[0],'featured_rank']=-1
+            new_painting_df.loc[new_painting_df.index[0],'num_favorers']=0
+            new_painting_df.loc[new_painting_df.index[0],'is_customizable']=False
+            new_painting_df.loc[new_painting_df.index[0],'has_variations']=False
+            new_painting_df.loc[new_painting_df.index[0],'days_from_original_creation']=mean_days_from_original_creation
+            new_painting_df.loc[new_painting_df.index[0],'weight']=mean_weight
+
+                
+            #set the values in the widget (note that each of these will also automatically relaunch the computation of price and neighbors):            
+            when_made_select.value =new_painting_df.iloc[0]['when_made']
+            types_select.value=new_painting_df.iloc[0]['painting_type']
+            
+            style_tags_multi_choice.value=eval(new_painting_df.iloc[0]['style_tags_new'])
+
+            materials_tags_multi_choice.value=eval(new_painting_df.iloc[0]['materials_tags_new'])
+            
+            other_tags_multi_choice.value=eval(new_painting_df.iloc[0]['tags_new'])
+    
+            max_dim_slider.value=new_painting_df.iloc[0]['max_dimension']
+    
+            min_dim_slider.value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
+    
+            if new_painting_df.iloc[0]['made_by_seller']:
+                checkbox_group_madebyseller.active=[0]
+            else:
+                checkbox_group_madebyseller.active=[]           
+            
+            
+            #now go back to the original predictions of price and neighbors based on ALL the features: 
+                        
+            #div_prediction.text=('<b>Predicted price on Etsy.com for the given painting from the test set:&nbsp; &nbsp; &nbsp; $'+ \
+            div_prediction.text=('<b>Predicted price on Etsy.com for a painting with the given features:&nbsp; &nbsp; &nbsp; $'+ \
+                               str(round(predicted_price_orig,1)) + '</b><br><br><b>Instructions:</b><br>\
+                               1) Edit features for custom prediction or click button to restart with a new painting<br>\
+                               2) Click on any image to go to the corresponding listing on Etsy.com (as of Nov 2021)') 
+         
+            layout.children[1] = column(create_listing_figure(index_to_show,from_test_set=True), div_prediction, width=500, height=700)
+            
+            layout.children[2] = column(create_neighbor_1_figure(nneighbor_indices_to_show_orig[0]), create_neighbor_2_figure(nneighbor_indices_to_show_orig[1]), \
+                                        create_neighbor_3_figure(nneighbor_indices_to_show_orig[2]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))   
+   
 
 
-    all_other_tags = ['nature','flowers','ocean','trees','mountains','sky','river','farm',\
-                      'woman','man','children','dog','cat','bird','animal','wildlife',\
-                       'spring','summer','fall','winter','christmas','tropical','cityscape',\
-                       'geometric','scene','decoration','photo','minimal','figurative','portraits','architecture',\
-                      'pour','fluid','antique','textured','collectibles','urban','bright','dark',\
-                       'office','nursery','kitchen','bedroom']
+    #Here is the code that initializes the app    
+        
+    #pick initial test painting to visualize in the app
+    
+    num_listings_test = len(paintings_df_test)
+    
+    #initialize Numpy's random generator
+    np.random.seed(seed=1)
+    
+    index_to_show = np.random.randint(num_listings_test)
 
-    other_tags_multi_choice = MultiChoice(title='Other Tags: ', options=all_other_tags, value=eval(new_painting_df.iloc[0]['tags_new']), margin=(10,20,30,0), height=120) #margin=(10,20,30,0), height=150 
+    new_painting_df = paintings_df_test.iloc[[index_to_show]]
+       
+    predicted_price = blended_model_rforest_linear.predict(new_painting_df)[0]
+    
+    #I already precomputed the nearest neighbors for each painting in the test set, so here I just need to recall the right row
+    nneighbor_indices_to_show = neigh_ind_test[index_to_show,:]
+     
+    #set the fields that are not part of the app to default values, in case the user wants to compute a custom prediction afterwards 
+    mean_days_from_original_creation = round(paintings_df_train['days_from_original_creation'].mean())
+    mean_weight = round(paintings_df_train['weight'].mean())
+    
+    new_painting_df.loc[new_painting_df.index[0],'featured_rank']=-1
+    new_painting_df.loc[new_painting_df.index[0],'num_favorers']=0
+    new_painting_df.loc[new_painting_df.index[0],'is_customizable']=False
+    new_painting_df.loc[new_painting_df.index[0],'has_variations']=False
+    new_painting_df.loc[new_painting_df.index[0],'days_from_original_creation']=mean_days_from_original_creation
+    new_painting_df.loc[new_painting_df.index[0],'weight']=mean_weight
+
+    #remove the tags that are not admissible in the app:
+    new_painting_df['style_tags_new'] = new_painting_df['style_tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_style_tags]).apply(repr)
+    new_painting_df['materials_tags_new'] = new_painting_df['materials_tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_materials_tags]).apply(repr)
+    new_painting_df['tags_new'] = new_painting_df['tags_new'].apply(eval).apply(lambda tags:[tag for tag in tags if tag in all_other_tags]).apply(repr)
+ 
+    
+    #Initialize the control widgets
+    
+    avail_when_made = ['made_2020s', 'made_2010s', 'made_before_2010', 'made_to_order']
+    
+    when_made_select = Select(title='When was it made:', value=new_painting_df.iloc[0]['when_made'], options=avail_when_made, margin=(10,20,10,0)) 
+    when_made_select.on_change('value',update_when_made)
+
+    
+    avail_types = ['acrylic', 'oil', 'watercolor', 'more_than_one']
+    types_select = Select(title='Type:', value=new_painting_df.iloc[0]['painting_type'], options=avail_types, margin=(10,20,10,0)) 
+    types_select.on_change('value',update_type)
+
+
+    style_tags_multi_choice = MultiChoice(title='Style: ', options=all_style_tags, value=eval(new_painting_df.iloc[0]['style_tags_new']), margin=(10,20,30,0), height=120) #margin=(10,20,30,0), height=150
+    style_tags_multi_choice.on_change("value", update_style_tags_list) 
+        
+    
+                            
+    materials_tags_multi_choice = MultiChoice(title='Materials and Colors: ', options=all_materials_tags, value=eval(new_painting_df.iloc[0]['materials_tags_new']), margin=(10,20,30,0), height=100) #150 
+    materials_tags_multi_choice.on_change("value", update_materials_tags_list) 
+     
+    
+    other_tags_multi_choice = MultiChoice(title='Other Tags: ', options=all_other_tags, value=eval(new_painting_df.iloc[0]['tags_new']), margin=(10,20,30,0), height=120) 
     other_tags_multi_choice.on_change("value", update_other_tags_list) 
-
-
+    
+    
     max_dim_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 1 [in]")
     max_dim_slider.on_change("value", update_max_dim) 
 
-
+    
     min_dim_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 2 [in]")
     min_dim_slider.on_change("value", update_min_dim) 
-
+    
     labels_checkboxes = ['Made by seller']
     if new_painting_df.iloc[0]['made_by_seller']:
         active_checkboxes=[0]
@@ -431,33 +512,34 @@ def paintora_app():
         active_checkboxes = []
     checkbox_group_madebyseller = CheckboxGroup(labels=labels_checkboxes, active=active_checkboxes)
     checkbox_group_madebyseller.on_change('active',update_madebyseller)
-
-
-    toggle_reinitialize = Toggle(label='Restart with new painting',active=False, margin=(10,20,20,0), width=150, height=75, width_policy='fixed', background='yellow') #margin=(50,20,30,0), background='black')
+    
+    
+    toggle_reinitialize = Toggle(label='Restart with new painting',active=False, margin=(10,20,20,0), width=150, height=75, width_policy='fixed') #, background='yellow') 
     toggle_reinitialize.on_click(restart_with_new_index)
 
-
-    #This is the important text box showing the price prediction 
-    div_prediction = Div(text=("<b>Predicted price on Etsy.com for a painting with the features specified on the left:  $</b>"+ str(round(predicted_price,2))), width=500, height=100,  width_policy='fixed', margin=(0,0,0,0), background='yellow') #height=50,
-
-    controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(50,0,0,0))
-
+    
+    #This is the important text box showing the price prediction and the instructions
+    #div_prediction = Div(text=('<b>Predicted price on Etsy.com for the given painting from the test set:&nbsp; &nbsp; &nbsp; $'+ \
+    div_prediction = Div(text=('<b>Predicted price on Etsy.com for a painting with the given features:&nbsp; &nbsp; &nbsp; $'+ \
+                               str(round(predicted_price,1)) + '</b><br><br><b>Instructions:</b><br>\
+                               1) Edit features for custom prediction or click button to restart with a new painting<br>\
+                               2) Click on any image to go to the corresponding listing on Etsy.com (as of Nov 2021)'), width=500, height=100,  width_policy='fixed', margin=(0,0,0,0), background='yellow') 
+    
+    controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(10,0,0,0)) 
+        
 
     neighbors = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), create_neighbor_2_figure(nneighbor_indices_to_show[1]), \
                        create_neighbor_3_figure(nneighbor_indices_to_show[2]), toggle_reinitialize, width=200, height=700, margin=(0,0,0,50))
-
+    
     painting_and_pred = column(create_listing_figure(index_to_show,from_test_set=True), div_prediction, width=500, height=700)
-
-    starting_text = 'Starting Paintora APP'
-    print(starting_text)
-
+    
     layout = row(controls, painting_and_pred, neighbors) 
 
-
     curdoc().add_root(layout)
-
+    
     
 paintora_app()
+
 
 # # Version for Flask/gunicorn deployment:
 
