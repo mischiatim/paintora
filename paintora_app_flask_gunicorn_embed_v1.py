@@ -148,7 +148,7 @@ def paintora_app(doc):
                       'woman','man','family','children','dog','cat','pet','animal','wildlife','still','life',\
                        'spring','summer','fall','winter','christmas','tropical',\
                        'geometric','scene','decoration','photo','figurative','portraits','plein','air',\
-                      'pour','fluid','antique','textured','collectibles',\
+                      'pour','fluid','antique','textured','collectibles','signed',\
                        'house','office','nursery','kitchen','bedroom',\
                       'bright','dark','square','rectangle',\
                      'sunrise','sunset','music','day','night','face','idea']
@@ -320,28 +320,48 @@ def paintora_app(doc):
 
   
     #These are the interactive callbacks from each of the widgets
- 
-    def update_max_dim(attr, old, new):
+    def update_dim1(attr, old, new):
+        max_dimension = new_painting_df.iloc[0]['max_dimension']
         min_dimension = new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
-        if new>=min_dimension:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/min_dimension
-        else:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=min_dimension/new
+        if old == max_dimension:
+            if new>=min_dimension:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/min_dimension
+            else:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=min_dimension/new
+        else: #old==min_dimension
+            if new<=max_dimension:
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=max_dimension/new
+            else:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/max_dimension
         update_predictions_and_images(new_painting_df)
 
-    def update_min_dim(attr, old, new):
+    def update_dim2(attr, old, new):
         max_dimension = new_painting_df.iloc[0]['max_dimension']
-        if new<=max_dimension:
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=max_dimension/new
-        else:
-            new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
-            new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
-            new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/max_dimension
+        min_dimension = new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
+        if old == max_dimension:
+            if new>=min_dimension:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/min_dimension
+            else:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*min_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=min_dimension/new
+        else: #old==min_dimension
+            if new<=max_dimension:
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=max_dimension/new
+            else:
+                new_painting_df.loc[new_painting_df.index[0],'max_dimension']=new
+                new_painting_df.loc[new_painting_df.index[0],'area']=new*max_dimension
+                new_painting_df.loc[new_painting_df.index[0],'aspect_ratio']=new/max_dimension
         update_predictions_and_images(new_painting_df)
         
     def update_type(attr, old, new):
@@ -415,9 +435,9 @@ def paintora_app(doc):
             
             other_tags_multi_choice.value=eval(new_painting_df.iloc[0]['tags_new'])
     
-            max_dim_slider.value=new_painting_df.iloc[0]['max_dimension']
+            dim1_slider.value=new_painting_df.iloc[0]['max_dimension']
     
-            min_dim_slider.value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
+            dim2_slider.value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension']
     
             if new_painting_df.iloc[0]['made_by_seller']:
                 checkbox_group_madebyseller.active=[0]
@@ -501,12 +521,12 @@ def paintora_app(doc):
     other_tags_multi_choice.on_change("value", update_other_tags_list) 
     
     
-    max_dim_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 1 [in]")
-    max_dim_slider.on_change("value", update_max_dim) 
+    dim1_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 1 [in]")
+    dim1_slider.on_change("value", update_dim1) 
 
     
-    min_dim_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 2 [in]")
-    min_dim_slider.on_change("value", update_min_dim) 
+    dim2_slider = Slider(start=10, end=70, value=new_painting_df.iloc[0]['area']/new_painting_df.iloc[0]['max_dimension'], step=1, title="Dimension 2 [in]")
+    dim2_slider.on_change("value", update_dim2) 
     
     labels_checkboxes = ['Made by seller']
     if new_painting_df.iloc[0]['made_by_seller']:
@@ -528,7 +548,7 @@ def paintora_app(doc):
                                1) Edit features for custom prediction or click button to restart with a new painting<br>\
                                2) Click on any image to go to the corresponding listing on Etsy.com (as of Nov 2021)'), width=500, height=100,  width_policy='fixed', margin=(0,0,0,0), background='yellow') 
     
-    controls = column(max_dim_slider,min_dim_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(10,0,0,0)) 
+    controls = column(dim1_slider,dim2_slider, types_select, when_made_select, checkbox_group_madebyseller, style_tags_multi_choice,materials_tags_multi_choice,other_tags_multi_choice,width=200, height=600, margin=(10,0,0,0)) 
         
 
     neighbors = column(create_neighbor_1_figure(nneighbor_indices_to_show[0]), create_neighbor_2_figure(nneighbor_indices_to_show[1]), \
