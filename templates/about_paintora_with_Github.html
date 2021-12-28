@@ -9,6 +9,8 @@
 
     <title>PaintORA</title>
 
+    {{ resources|safe }}
+
     <!-- Bootstrap core CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
   </head>
@@ -17,8 +19,7 @@
       <div class="row">
         <div class="col-lg-12 text-left">
           <h2>PaintORA: the Oracle of Paintings</h2>
-	  <p> by Matteo Mischiati, &copy; 2021 </p> 
-          <p><a href="https://github.com/mischiatim/paintora/">Github</a></p>
+	  <p> by Matteo Mischiati, &copy; 2021 - <a href="https://github.com/mischiatim/paintora/">Github</a> </p>
         </div>
       </div>
       {{ script|safe }}

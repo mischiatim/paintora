@@ -45,9 +45,17 @@ See the '_ml_models_' notebook for details.
 See the '_local_demo_.ipynb' notebook for details.   
 
 ## App deployment
-- I made the Bokeh server app standalone following the example in Bekeh documentation:
-  https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/standalone_embed.py.
-- I defined appropriate setting files (requirements.txt, Procfile and runtime.txt), created a Heroku app, and deployed to Heroku via Git.
+- I  made a Bokeh server app with full Python callbacks (paintora_bokehapp_v1.py) and a Flask app that adds title and Github link to the Bokeh app (paintora_flaskapp_v1.py). I used Heroku cloud application services for hosting the Paintora app. 
+- Combining Bokeh server app + Flask app is tricky on Heroku. I adopted the solution from the following repository:
+https://github.com/hmanuel1/covid/tree/master/app/utest
+(See also the discussion at https://discourse.bokeh.org/t/hosting-a-flask-bokeh-server-app-in-heroku/5490/8.)
+This solution implements a HTTP reverse-proxy using Flask and a Web Socket reverse-proxy using Tornado.
+- The combined Bokeh server app + Flask app is launched by the script run.py (see Procfile executed by Heroku).
+The app can be tested locally by changing 'heroku' to 'local' in the first line of config.yaml, running 'python run.py' in a terminal and opening http://127.0.0.1:8000/ in an internet browser.
+- I also created a version in which the Bokeh app is standalone without any Flask app: paintora_app_bokeh_standalone_v1,
+following the example in the Bokeh documentation: https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/standalone_embed.py.
+This version can be run by calling 'bokeh serve --show paintora_app_bokeh_standalone_v1' for local testing, and replacing the content of Procfile with the content of 'Procfile_bokeh_standalone' for execution in Heroku.
+- Other versions of the code (paintora_app_flask_embed_v1.py, paintora_app_flask_gunicorn_embed_v1.py) work locally but not on Heroku.
 
 _____________________________________________________________
 Copyright &copy; 2021 Matteo Mischiati All Rights Reserved.
