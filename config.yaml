@@ -1,4 +1,4 @@
-environment: 'local'
+environment: 'heroku'
 
 app:
   bokeh:
