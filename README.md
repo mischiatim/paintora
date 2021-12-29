@@ -33,7 +33,7 @@ See the '_data_downloading_' notebook for details.
 
 See the '_ml_models_' notebook for details.  
 
-## Interative visualization of the results 
+## Interactive visualization of the results 
 - I used Bokeh (https://bokeh.org) to create an app with multiple interactive widgets.
 - The app is initialized by loading one of the 'test' listings (not used for training the machine learning models) and showing: its image, its listed and predicted price, its three closest neighbors in the 'train' set.
 - A button is provided to allow the user to re-initialize the app with a different test listing (pseudo-random generator)
@@ -54,8 +54,10 @@ This solution implements a HTTP reverse-proxy using Flask and a Web Socket rever
 The app can be tested locally by changing 'heroku' to 'local' in the first line of config.yaml, running 'python run.py' in a terminal and opening http://127.0.0.1:8000/ in an internet browser.
 - I also created a version in which the Bokeh app is standalone without any Flask app: paintora_app_bokeh_standalone_v1,
 following the example in the Bokeh documentation: https://github.com/bokeh/bokeh/blob/2.4.0/examples/howto/server_embed/standalone_embed.py.
-This version can be run by calling 'bokeh serve --show paintora_app_bokeh_standalone_v1' for local testing, and replacing the content of Procfile with the content of 'Procfile_bokeh_standalone' for execution in Heroku.
+This version can be run by calling 'bokeh serve --show paintora_app_bokeh_standalone_v1' for local testing, and replacing the content of 'Procfile' with the content of 'Procfile_bokeh_standalone' for execution in Heroku.
 - Other versions of the code (paintora_app_flask_embed_v1.py, paintora_app_flask_gunicorn_embed_v1.py) work locally but not on Heroku.
+- Main tools: Bokeh, Flask, Heroku cloud application services.   
 
+See the 'paintora_bokehapp_v1.py', 'paintora_flaskapp_v1.py', 'run.py', 'config.py', 'wsproxy.py' scripts for details.
 _____________________________________________________________
 Copyright &copy; 2021 Matteo Mischiati All Rights Reserved.
